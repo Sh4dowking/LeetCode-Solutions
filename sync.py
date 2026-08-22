@@ -98,8 +98,12 @@ def run_sync():
 
     for sub in reversed(accepted_subs):
         sub_id = sub['id']
-        runtime_val = parse_metric(sub['time'])
-        memory_val = parse_metric(sub['memory'])
+        
+        raw_runtime = sub.get('runtime', '0 ms').replace('\u00a0', ' ')
+        raw_memory = sub.get('memory', '0 MB').replace('\u00a0', ' ')
+        
+        runtime_val = parse_metric(raw_runtime)
+        memory_val = parse_metric(raw_memory)
         lang_ext = ext_map.get(sub['lang'], 'txt')
 
         details = get_submission_details(sub_id)
@@ -113,33 +117,14 @@ def run_sync():
 
         folder_name = f"solutions/{q_id_padded} - {q_title}"
         os.makedirs(folder_name, exist_ok=True)
-        
-        # Files are named solution.py, solution.cpp, etc.
         code_path = os.path.join(folder_name, f"solution.{lang_ext}")
 
         is_better = False
         
         if q_id_padded in master_meta:
-            # --- MIGRATION BLOCK: Upgrade old format to multi-language format ---
             if "solutions" not in master_meta[q_id_padded]:
-                old_lang = master_meta[q_id_padded].get("language", "unknown")
-                old_ext = ext_map.get(old_lang, "txt")
-                master_meta[q_id_padded]["solutions"] = {
-                    old_ext: {
-                        "language": old_lang,
-                        "runtime": master_meta[q_id_padded].get("runtime"),
-                        "runtime_formatted": master_meta[q_id_padded].get("runtime_formatted"),
-                        "memory": master_meta[q_id_padded].get("memory"),
-                        "memory_formatted": master_meta[q_id_padded].get("memory_formatted"),
-                        "submission_id": master_meta[q_id_padded].get("submission_id")
-                    }
-                }
-                # Remove the old flat keys
-                for k in ["language", "runtime", "runtime_formatted", "memory", "memory_formatted", "submission_id"]:
-                    master_meta[q_id_padded].pop(k, None)
-            # --- END MIGRATION BLOCK ---
-
-            # Check if this specific language has been solved before
+                master_meta[q_id_padded] = {"title": q_title, "solutions": {}}
+                
             if lang_ext in master_meta[q_id_padded]["solutions"]:
                 prev_runtime = master_meta[q_id_padded]["solutions"][lang_ext].get('runtime', float('inf'))
                 prev_memory = master_meta[q_id_padded]["solutions"][lang_ext].get('memory', float('inf'))
@@ -150,33 +135,42 @@ def run_sync():
                     if memory_val <= prev_memory: 
                         is_better = True
             else:
-                is_better = True # First time using this language for this problem
+                is_better = True 
         else:
-            is_better = True # First time solving this problem entirely
+            is_better = True 
             master_meta[q_id_padded] = {"title": q_title, "solutions": {}}
 
         if is_better:
             with open(code_path, "w", encoding="utf-8") as f:
                 f.write(code)
             
-            # Save stats under the specific language extension
             master_meta[q_id_padded]["solutions"][lang_ext] = {
                 "language": sub['lang'],
                 "runtime": runtime_val,
-                "runtime_formatted": sub['time'],
+                "runtime_formatted": raw_runtime,
                 "memory": memory_val,
-                "memory_formatted": sub['memory'],
+                "memory_formatted": raw_memory,
                 "submission_id": sub_id
             }
             
-            print(f"Updated {q_id_padded} - {q_title} ({lang_ext}): {sub['time']}, {sub['memory']}")
+            print(f"Updated {q_id_padded} - {q_title} ({lang_ext}): {raw_runtime}, {raw_memory}")
             updates_made += 1
             
         time.sleep(1) 
 
     if updates_made > 0:
+        # --- FIX: Manually build a properly ordered dictionary ---
+        ordered_meta = {}
+        for key in sorted(master_meta.keys()):
+            # We explicitly define "title" first, then "solutions" second
+            ordered_meta[key] = {
+                "title": master_meta[key]["title"],
+                "solutions": master_meta[key]["solutions"]
+            }
+
         with open(master_meta_path, "w", encoding="utf-8") as f:
-            json.dump(master_meta, f, indent=4, sort_keys=True)
+            # We remove sort_keys=True so Python respects our manual ordering above
+            json.dump(ordered_meta, f, indent=4, ensure_ascii=False)
             
         push_to_github(f"Daily Sync: Updated {updates_made} solutions")
     else:
