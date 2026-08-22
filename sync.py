@@ -60,7 +60,11 @@ def get_submission_details(sub_id):
     query submissionDetails($submissionId: Int!) {
       submissionDetails(submissionId: $submissionId) { 
         code 
-        question { questionFrontendId title }
+        question { 
+            questionFrontendId 
+            title 
+            difficulty 
+        }
       }
     }
     """
@@ -69,52 +73,85 @@ def get_submission_details(sub_id):
     return res['data'].get('submissionDetails')
 
 def update_readme(master_meta):
-    """Generates a beautiful README.md with Mermaid graphs and a summary table."""
-    total_problems = len(master_meta)
-    lang_counts = {}
+    """Generates a beautiful README.md with a static chart and a summary table."""
+    total_unique_problems = len(master_meta)
+    diff_counts = {"Easy": 0, "Medium": 0, "Hard": 0}
     table_rows = []
 
-    # Calculate stats and build table
     for q_id, data in master_meta.items():
         title = data['title']
+        difficulty = data.get('difficulty', 'Unknown')
+        
+        if difficulty in diff_counts:
+            diff_counts[difficulty] += 1
+            
         solutions = data['solutions']
         
-        # Track language stats
-        langs_used = []
-        for lang_ext, details in solutions.items():
-            lang_name = details['language']
-            langs_used.append(f"`{lang_name}`")
-            lang_counts[lang_name] = lang_counts.get(lang_name, 0) + 1
-            
-        lang_str = ", ".join(langs_used)
+        # Prepare lists to handle multiple languages beautifully in one cell
+        langs = []
+        runtimes = []
+        memories = []
         
-        # Create URL-safe link to the problem folder
+        for lang_ext, details in solutions.items():
+            langs.append(f"`{details['language']}`")
+            runtimes.append(details['runtime_formatted'])
+            memories.append(details['memory_formatted'])
+            
+        # Join with <br> to stack them vertically in the table cell
+        lang_str = "<br>".join(langs)
+        runtime_str = "<br>".join(runtimes)
+        memory_str = "<br>".join(memories)
+        
+        # Add a colored circle next to difficulty in the table
+        diff_emoji = "🟢" if difficulty == "Easy" else "🟠" if difficulty == "Medium" else "🔴" if difficulty == "Hard" else "⚪"
+        
         folder_path = urllib.parse.quote(f"solutions/{q_id} - {title}")
-        table_rows.append(f"| {q_id} | [{title}](./{folder_path}) | {lang_str} |")
+        table_rows.append(f"| {q_id} | [{title}](./{folder_path}) | {diff_emoji} {difficulty} | {lang_str} | {runtime_str} | {memory_str} |")
 
-    # Generate Mermaid Pie Chart
-    pie_chart = "```mermaid\npie title Solutions by Language\n"
-    for lang, count in lang_counts.items():
-        pie_chart += f'    "{lang}" : {count}\n'
-    pie_chart += "```\n"
+    # Filter out empty difficulties so they don't show up in the chart legend
+    chart_labels = []
+    chart_data = []
+    chart_colors = []
+    
+    if diff_counts["Easy"] > 0:
+        chart_labels.append("Easy")
+        chart_data.append(diff_counts["Easy"])
+        chart_colors.append("#2cba42") # LeetCode Green
+    if diff_counts["Medium"] > 0:
+        chart_labels.append("Medium")
+        chart_data.append(diff_counts["Medium"])
+        chart_colors.append("#ffa116") # LeetCode Orange
+    if diff_counts["Hard"] > 0:
+        chart_labels.append("Hard")
+        chart_data.append(diff_counts["Hard"])
+        chart_colors.append("#ef4743") # LeetCode Red
+        
+    # Generate static chart image URL
+    chart_config = {
+        "type": "pie",
+        "data": {
+            "labels": chart_labels,
+            "datasets": [{
+                "data": chart_data,
+                "backgroundColor": chart_colors
+            }]
+        }
+    }
+    encoded_config = urllib.parse.quote(json.dumps(chart_config))
+    chart_url = f"https://quickchart.io/chart?c={encoded_config}&w=400&h=250"
 
     # Assemble Markdown content
-    readme_content = f"""# LeetCode Auto-Sync 🏆
+    readme_content = f"""# Leet Code Statistics 📊
 
-This repository contains my automatically synced LeetCode solutions.
+## Problem Difficulty Distribution
+<img src="{chart_url}" width="400" />
 
-## 📊 Statistics
-
-* **Total Problems Solved:** {total_problems}
-* **Total Submissions Saved:** {sum(lang_counts.values())}
-
-### Language Breakdown
-{pie_chart}
+### Summary
+* **Total Unique Problems Solved:** {total_unique_problems}
 
 ## 📝 Solutions
-
-| ID | Problem | Languages |
-| :--- | :--- | :--- |
+| ID | Problem | Difficulty | Languages | Runtime | Memory |
+| :--- | :--- | :--- | :--- | :--- | :--- |
 """
     readme_content += "\n".join(table_rows)
 
@@ -124,7 +161,6 @@ This repository contains my automatically synced LeetCode solutions.
 
 def push_to_github(commit_message):
     try:
-        # Added README.md to the git add command
         subprocess.run(["git", "add", "solutions/", "master_meta.json", "README.md"], check=True)
         status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
         if not status.stdout.strip():
@@ -169,6 +205,7 @@ def run_sync():
         q_id = details['question']['questionFrontendId']
         q_id_padded = str(q_id).zfill(4)
         q_title = details['question']['title']
+        q_difficulty = details['question']['difficulty']
         code = details['code']
 
         folder_name = f"solutions/{q_id_padded} - {q_title}"
@@ -179,7 +216,10 @@ def run_sync():
         
         if q_id_padded in master_meta:
             if "solutions" not in master_meta[q_id_padded]:
-                master_meta[q_id_padded] = {"title": q_title, "solutions": {}}
+                master_meta[q_id_padded] = {"title": q_title, "difficulty": q_difficulty, "solutions": {}}
+                
+            # Update difficulty in case it was missing
+            master_meta[q_id_padded]["difficulty"] = q_difficulty
                 
             if lang_ext in master_meta[q_id_padded]["solutions"]:
                 prev_runtime = master_meta[q_id_padded]["solutions"][lang_ext].get('runtime', float('inf'))
@@ -194,7 +234,7 @@ def run_sync():
                 is_better = True 
         else:
             is_better = True 
-            master_meta[q_id_padded] = {"title": q_title, "solutions": {}}
+            master_meta[q_id_padded] = {"title": q_title, "difficulty": q_difficulty, "solutions": {}}
 
         if is_better:
             with open(code_path, "w", encoding="utf-8") as f:
@@ -219,13 +259,14 @@ def run_sync():
         for key in sorted(master_meta.keys()):
             ordered_meta[key] = {
                 "title": master_meta[key]["title"],
+                "difficulty": master_meta[key].get("difficulty", "Unknown"),
                 "solutions": master_meta[key]["solutions"]
             }
 
         with open(master_meta_path, "w", encoding="utf-8") as f:
             json.dump(ordered_meta, f, indent=4, ensure_ascii=False)
             
-        # --- NEW: Generate README before pushing ---
+        # Build the README before committing
         update_readme(ordered_meta)
             
         push_to_github(f"Daily Sync: Updated {updates_made} solutions")
