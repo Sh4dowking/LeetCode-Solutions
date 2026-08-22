@@ -73,7 +73,7 @@ def get_submission_details(sub_id):
     return res['data'].get('submissionDetails')
 
 def update_readme(master_meta):
-    """Generates a beautiful README.md with a premium doughnut chart."""
+    """Generates a beautiful README.md with a vibrant doughnut chart."""
     total_unique_problems = len(master_meta)
     diff_counts = {"Easy": 0, "Medium": 0, "Hard": 0}
     table_rows = []
@@ -109,21 +109,20 @@ def update_readme(master_meta):
     chart_data = []
     chart_colors = []
     
-    # Using exact LeetCode modern hex colors
+    # Highly saturated, vibrant hex colors
     if diff_counts["Easy"] > 0:
         chart_labels.append("Easy")
         chart_data.append(diff_counts["Easy"])
-        chart_colors.append("#00b8a3") 
+        chart_colors.append("#00FF00") # Vibrant Green
     if diff_counts["Medium"] > 0:
         chart_labels.append("Medium")
         chart_data.append(diff_counts["Medium"])
-        chart_colors.append("#ffc01e") 
+        chart_colors.append("#FF8C00") # Vibrant Dark Orange
     if diff_counts["Hard"] > 0:
         chart_labels.append("Hard")
         chart_data.append(diff_counts["Hard"])
-        chart_colors.append("#ef4743") 
+        chart_colors.append("#FF0000") # Pure Red
         
-    # Generate premium doughnut chart configuration
     chart_config = {
         "type": "doughnut",
         "data": {
@@ -131,7 +130,7 @@ def update_readme(master_meta):
             "datasets": [{
                 "data": chart_data,
                 "backgroundColor": chart_colors,
-                "borderWidth": 0, # Removes the white borders
+                "borderWidth": 0, 
             }]
         },
         "options": {
@@ -157,13 +156,10 @@ def update_readme(master_meta):
     }
     
     encoded_config = urllib.parse.quote(json.dumps(chart_config))
-    # Render on transparent background
     chart_url = f"https://quickchart.io/chart?c={encoded_config}&w=500&h=300&bkg=transparent"
 
-    # Assemble Markdown content with centered layout
-    readme_content = f"""# Leet Code Statistics 📊
+    readme_content = f"""## 📊 Leet Code Statistics
 
-## Problem Difficulty Distribution
 <p align="center">
   <img src="{chart_url}" width="500" />
 </p>
