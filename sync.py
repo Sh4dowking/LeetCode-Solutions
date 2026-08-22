@@ -3,6 +3,7 @@ import requests
 import json
 import subprocess
 import time
+import urllib.parse
 
 # --- CONFIGURATION ---
 LEETCODE_SESSION = os.environ.get('LEETCODE_SESSION')
@@ -67,9 +68,64 @@ def get_submission_details(sub_id):
     res = requests.post(graphql_url, json=payload, headers=headers).json()
     return res['data'].get('submissionDetails')
 
+def update_readme(master_meta):
+    """Generates a beautiful README.md with Mermaid graphs and a summary table."""
+    total_problems = len(master_meta)
+    lang_counts = {}
+    table_rows = []
+
+    # Calculate stats and build table
+    for q_id, data in master_meta.items():
+        title = data['title']
+        solutions = data['solutions']
+        
+        # Track language stats
+        langs_used = []
+        for lang_ext, details in solutions.items():
+            lang_name = details['language']
+            langs_used.append(f"`{lang_name}`")
+            lang_counts[lang_name] = lang_counts.get(lang_name, 0) + 1
+            
+        lang_str = ", ".join(langs_used)
+        
+        # Create URL-safe link to the problem folder
+        folder_path = urllib.parse.quote(f"solutions/{q_id} - {title}")
+        table_rows.append(f"| {q_id} | [{title}](./{folder_path}) | {lang_str} |")
+
+    # Generate Mermaid Pie Chart
+    pie_chart = "```mermaid\npie title Solutions by Language\n"
+    for lang, count in lang_counts.items():
+        pie_chart += f'    "{lang}" : {count}\n'
+    pie_chart += "```\n"
+
+    # Assemble Markdown content
+    readme_content = f"""# LeetCode Auto-Sync 🏆
+
+This repository contains my automatically synced LeetCode solutions.
+
+## 📊 Statistics
+
+* **Total Problems Solved:** {total_problems}
+* **Total Submissions Saved:** {sum(lang_counts.values())}
+
+### Language Breakdown
+{pie_chart}
+
+## 📝 Solutions
+
+| ID | Problem | Languages |
+| :--- | :--- | :--- |
+"""
+    readme_content += "\n".join(table_rows)
+
+    with open("README.md", "w", encoding="utf-8") as f:
+        f.write(readme_content)
+    print("Generated beautiful README.md summary.")
+
 def push_to_github(commit_message):
     try:
-        subprocess.run(["git", "add", "solutions/", "master_meta.json"], check=True)
+        # Added README.md to the git add command
+        subprocess.run(["git", "add", "solutions/", "master_meta.json", "README.md"], check=True)
         status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
         if not status.stdout.strip():
             print("No new file changes to push.")
@@ -159,18 +215,18 @@ def run_sync():
         time.sleep(1) 
 
     if updates_made > 0:
-        # --- FIX: Manually build a properly ordered dictionary ---
         ordered_meta = {}
         for key in sorted(master_meta.keys()):
-            # We explicitly define "title" first, then "solutions" second
             ordered_meta[key] = {
                 "title": master_meta[key]["title"],
                 "solutions": master_meta[key]["solutions"]
             }
 
         with open(master_meta_path, "w", encoding="utf-8") as f:
-            # We remove sort_keys=True so Python respects our manual ordering above
             json.dump(ordered_meta, f, indent=4, ensure_ascii=False)
+            
+        # --- NEW: Generate README before pushing ---
+        update_readme(ordered_meta)
             
         push_to_github(f"Daily Sync: Updated {updates_made} solutions")
     else:
