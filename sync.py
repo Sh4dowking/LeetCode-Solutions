@@ -73,7 +73,7 @@ def get_submission_details(sub_id):
     return res['data'].get('submissionDetails')
 
 def update_readme(master_meta):
-    """Generates a beautiful README.md with a static chart and a summary table."""
+    """Generates a beautiful README.md with a premium doughnut chart."""
     total_unique_problems = len(master_meta)
     diff_counts = {"Easy": 0, "Medium": 0, "Hard": 0}
     table_rows = []
@@ -87,7 +87,6 @@ def update_readme(master_meta):
             
         solutions = data['solutions']
         
-        # Prepare lists to handle multiple languages beautifully in one cell
         langs = []
         runtimes = []
         memories = []
@@ -97,57 +96,77 @@ def update_readme(master_meta):
             runtimes.append(details['runtime_formatted'])
             memories.append(details['memory_formatted'])
             
-        # Join with <br> to stack them vertically in the table cell
         lang_str = "<br>".join(langs)
         runtime_str = "<br>".join(runtimes)
         memory_str = "<br>".join(memories)
         
-        # Add a colored circle next to difficulty in the table
         diff_emoji = "🟢" if difficulty == "Easy" else "🟠" if difficulty == "Medium" else "🔴" if difficulty == "Hard" else "⚪"
         
         folder_path = urllib.parse.quote(f"solutions/{q_id} - {title}")
         table_rows.append(f"| {q_id} | [{title}](./{folder_path}) | {diff_emoji} {difficulty} | {lang_str} | {runtime_str} | {memory_str} |")
 
-    # Filter out empty difficulties so they don't show up in the chart legend
     chart_labels = []
     chart_data = []
     chart_colors = []
     
+    # Using exact LeetCode modern hex colors
     if diff_counts["Easy"] > 0:
         chart_labels.append("Easy")
         chart_data.append(diff_counts["Easy"])
-        chart_colors.append("#2cba42") # LeetCode Green
+        chart_colors.append("#00b8a3") 
     if diff_counts["Medium"] > 0:
         chart_labels.append("Medium")
         chart_data.append(diff_counts["Medium"])
-        chart_colors.append("#ffa116") # LeetCode Orange
+        chart_colors.append("#ffc01e") 
     if diff_counts["Hard"] > 0:
         chart_labels.append("Hard")
         chart_data.append(diff_counts["Hard"])
-        chart_colors.append("#ef4743") # LeetCode Red
+        chart_colors.append("#ef4743") 
         
-    # Generate static chart image URL
+    # Generate premium doughnut chart configuration
     chart_config = {
-        "type": "pie",
+        "type": "doughnut",
         "data": {
             "labels": chart_labels,
             "datasets": [{
                 "data": chart_data,
-                "backgroundColor": chart_colors
+                "backgroundColor": chart_colors,
+                "borderWidth": 0, # Removes the white borders
             }]
+        },
+        "options": {
+            "cutoutPercentage": 75,
+            "legend": {
+                "position": "right",
+                "labels": {
+                    "fontColor": "#8b949e",
+                    "fontFamily": "sans-serif",
+                    "fontSize": 16,
+                    "padding": 20
+                }
+            },
+            "plugins": {
+                "doughnutlabel": {
+                    "labels": [
+                        { "text": str(total_unique_problems), "font": { "size": "45", "weight": "bold" }, "color": "#c9d1d9" },
+                        { "text": "Solved", "font": { "size": "16" }, "color": "#8b949e" }
+                    ]
+                }
+            }
         }
     }
+    
     encoded_config = urllib.parse.quote(json.dumps(chart_config))
-    chart_url = f"https://quickchart.io/chart?c={encoded_config}&w=400&h=250"
+    # Render on transparent background
+    chart_url = f"https://quickchart.io/chart?c={encoded_config}&w=500&h=300&bkg=transparent"
 
-    # Assemble Markdown content
+    # Assemble Markdown content with centered layout
     readme_content = f"""# Leet Code Statistics 📊
 
 ## Problem Difficulty Distribution
-<img src="{chart_url}" width="400" />
-
-### Summary
-* **Total Unique Problems Solved:** {total_unique_problems}
+<p align="center">
+  <img src="{chart_url}" width="500" />
+</p>
 
 ## 📝 Solutions
 | ID | Problem | Difficulty | Languages | Runtime | Memory |
@@ -218,7 +237,6 @@ def run_sync():
             if "solutions" not in master_meta[q_id_padded]:
                 master_meta[q_id_padded] = {"title": q_title, "difficulty": q_difficulty, "solutions": {}}
                 
-            # Update difficulty in case it was missing
             master_meta[q_id_padded]["difficulty"] = q_difficulty
                 
             if lang_ext in master_meta[q_id_padded]["solutions"]:
@@ -266,7 +284,6 @@ def run_sync():
         with open(master_meta_path, "w", encoding="utf-8") as f:
             json.dump(ordered_meta, f, indent=4, ensure_ascii=False)
             
-        # Build the README before committing
         update_readme(ordered_meta)
             
         push_to_github(f"Daily Sync: Updated {updates_made} solutions")
