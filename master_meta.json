@@ -13,6 +13,34 @@
             }
         }
     },
+    "0003": {
+        "title": "Longest Substring Without Repeating Characters",
+        "difficulty": "Medium",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 4.0,
+                "runtime_formatted": "4 ms",
+                "memory": 48.1,
+                "memory_formatted": "48.1 MB",
+                "submission_id": 2116014408
+            }
+        }
+    },
+    "0005": {
+        "title": "Longest Palindromic Substring",
+        "difficulty": "Medium",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 84.0,
+                "runtime_formatted": "84 ms",
+                "memory": 48.1,
+                "memory_formatted": "48.1 MB",
+                "submission_id": 2116208825
+            }
+        }
+    },
     "3622": {
         "title": "Check Divisibility by Digit Sum and Product",
         "difficulty": "Easy",
