@@ -62,5 +62,19 @@
                 "submission_id": 2115945628
             }
         }
+    },
+    "3718": {
+        "title": "Smallest Missing Multiple of K",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 0.0,
+                "runtime_formatted": "0 ms",
+                "memory": 44.9,
+                "memory_formatted": "44.9 MB",
+                "submission_id": 2119908389
+            }
+        }
     }
 }
