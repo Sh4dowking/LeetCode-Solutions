@@ -41,6 +41,118 @@
             }
         }
     },
+    "2913": {
+        "title": "Subarrays Distinct Element Sum of Squares I",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 3.0,
+                "runtime_formatted": "3 ms",
+                "memory": 45.6,
+                "memory_formatted": "45.6 MB",
+                "submission_id": 2123814126
+            }
+        }
+    },
+    "2917": {
+        "title": "Find the K-or of an Array",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 45.3,
+                "memory_formatted": "45.3 MB",
+                "submission_id": 2123822452
+            }
+        }
+    },
+    "2923": {
+        "title": "Find Champion I",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 0.0,
+                "runtime_formatted": "0 ms",
+                "memory": 47.2,
+                "memory_formatted": "47.2 MB",
+                "submission_id": 2123841627
+            }
+        }
+    },
+    "2928": {
+        "title": "Distribute Candies Among Children I",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 42.3,
+                "memory_formatted": "42.3 MB",
+                "submission_id": 2123850168
+            }
+        }
+    },
+    "2932": {
+        "title": "Maximum Strong Pair XOR I",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 45.0,
+                "memory_formatted": "45 MB",
+                "submission_id": 2123854416
+            }
+        }
+    },
+    "2937": {
+        "title": "Make Three Strings Equal",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 46.2,
+                "memory_formatted": "46.2 MB",
+                "submission_id": 2123873746
+            }
+        }
+    },
+    "2942": {
+        "title": "Find Words Containing Character",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 46.7,
+                "memory_formatted": "46.7 MB",
+                "submission_id": 2123884939
+            }
+        }
+    },
+    "2946": {
+        "title": "Matrix Similarity After Cyclic Shifts",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 46.9,
+                "memory_formatted": "46.9 MB",
+                "submission_id": 2123893575
+            }
+        }
+    },
     "3622": {
         "title": "Check Divisibility by Digit Sum and Product",
         "difficulty": "Easy",
