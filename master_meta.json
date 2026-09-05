@@ -188,5 +188,19 @@
                 "submission_id": 2119908389
             }
         }
+    },
+    "3903": {
+        "title": "Smallest Stable Index I",
+        "difficulty": "Easy",
+        "solutions": {
+            "java": {
+                "language": "java",
+                "runtime": 1.0,
+                "runtime_formatted": "1 ms",
+                "memory": 45.9,
+                "memory_formatted": "45.9 MB",
+                "submission_id": 2130545989
+            }
+        }
     }
 }
